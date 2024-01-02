@@ -4,61 +4,71 @@ import {useState, useEffect} from "react";
 
 
 const defaultLocation = { position: { lat: 48.8584, lng: 2.2945 } };
-const defaultZoom = 14;
-const activeZoom = 16;
+const defaultZoom = 13;
+const minimumZoom = 16;
+const radius = Math.sqrt(300000 / Math.PI);
 
-const GoogleMapComponent = ({ radius, setCursorCoords, setScale, zoomControlEnabled, marker, setMarker, removeMarker, drawPath}) => {
+
+const GoogleMapComponent = ({ zoomControlEnabled, marker, setMarker, removeMarker, drawPath, setDiameter }) => {
 
 
     const [center, setCenter] = useState(defaultLocation);
-    const [zoom, setZoom] = useState(defaultZoom);
-    // const setGoogleMap = useOnLoad(center, setZoom, setScale);
-    const { isLoaded, onLoad, map } = useOnLoad(center, setZoom, setScale);
+    const [zoom, setZoom] = useState(defaultZoom);  
+    const { isLoaded, onLoad, map } = useOnLoad(marker, zoom, setZoom);
+    
+    // * constriant zoom level too a minimum
+    function constriantZoom() {
+        if (zoom > minimumZoom) {
+            setZoom(minimumZoom);
+            return minimumZoom;
+        }
+
+        return zoom;
+    }
 
     useEffect(() => {
         setMarker({ position: { lat: null, lng: null } })
     }, [removeMarker]);
 
 
-    // lock the map for drawing
-    // unlock map for drawing
-    useEffect(() => {
 
+    // lock the map for drawing
+    useEffect(() => {
         if (drawPath) {
+
+            if (marker.position.lat !== null && marker.position.lng !== null) {
+                const pixelCoordinates = map.getProjection().fromLatLngToPoint(marker.position);
+                // setPos(pixelCoordinates);
+                console.log(pixelCoordinates);
+            }
+
+            const activeZoom = constriantZoom();
             const newCenter = { position: { lat: center.position.lat, lng: center.position.lng } };
+            const diameterCal = metersToPixel(newCenter.position.lat, activeZoom);
+            
+            setDiameter(diameterCal);
             setCenter(newCenter);
-            setZoom(activeZoom);
-        } else {
-            setZoom(defaultZoom);
-        }
+        } 
     }, [drawPath]);
 
 
     // adding coordinate 
     const handleAddMarker = (e) => {
         if (e.latLng && zoomControlEnabled) {
-
-            const pixel = map.getProjection().fromLatLngToPoint(e.latLng);
-            const mouseLoc = { x: pixel.x, y: pixel.y };
-            setCursorCoords(mouseLoc);
-
             const newMarker = { position: { lat: e.latLng.lat(), lng: e.latLng.lng() } };
             setCenter(newMarker);
             setMarker(newMarker);
-
-            console.log('Cursur location', mouseLoc);
-            console.log('Marker location', newMarker);
+            
+            
       };
     }
 
-
-
-    
     
     
     if (!isLoaded) {
         return <div>Loading...</div>;
     }
+
 
     return (
         
@@ -81,7 +91,9 @@ const GoogleMapComponent = ({ radius, setCursorCoords, setScale, zoomControlEnab
             {marker !== null && marker.position.lat !== null && marker.position.lng !== null && (
                 <>
                 
-                    <MarkerF key="marker" position={marker.position} />
+                    { !drawPath &&(
+                        <MarkerF key="marker" position={marker.position} />
+                    )}
                     
                         <CircleF
                             key="circle"
@@ -104,6 +116,16 @@ const circleOptions = {
     strokeWeight: 1,
 };
 
-
-
 export default GoogleMapComponent;
+
+// converting meters into pixel
+function metersPerPixel(lat, zoom) {
+
+    const earthCircumference = 40075017;
+    const latitudeRadians = lat * (Math.PI / 180);
+    return earthCircumference * Math.cos(latitudeRadians) / Math.pow(2, zoom + 8);
+}
+
+
+function metersToPixel(lat, zoom) { return radius / metersPerPixel(lat, zoom) * 2; }
+

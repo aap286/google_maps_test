@@ -42,3 +42,11 @@
 .map-container-disabled-selection {
   user-select: none;
 }
+
+.relative-position {
+  position: relative;
+}
+
+.absolute-position {
+  position: absolute;
+}
