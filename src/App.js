@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import './App.css';
 import GoogleMapComponent  from "./Components/googleMap";
+import Canvas from './Components/Canvas';
 
 // let canavsOuterLayoutStyle = {};
 
@@ -56,13 +57,40 @@ function App() {
     });
   }, [diameter]);
 
+
+  // TODO: adding canvas
+
+  // boolean for deleting path by button
+  const [delPath, setDelPath] = useState(null);
+
+  const [drawingPoints, setDrawingPoints] = useState([]);
+
+  const handlePathDelete = () => {
+    setDelPath(true);
+  };
+
+
+  // Function to update the variable
+  const updateDrawingPoints = (newPoints) => {
+
+    setDrawingPoints([...drawingPoints, [Math.round(newPoints.x * 1000) / 1000, Math.round(newPoints.y * 1000) / 1000]]);
+    
+    console.log(drawingPoints);
+  };
+
   
   return (
     <div className="map-outter-layer">
       <div className="map-layout relative-position">
-        {drawPath && marker.position.lat != null && marker.position.lng != null && (
+        {diameter !== null && drawPath && marker.position.lat != null && marker.position.lng != null && (
           <div className="absolute-position"  style={canavsOuterLayoutStyle}>
-            canavs***
+            <Canvas
+              width={diameter}
+              height={diameter}
+              delPath={delPath}
+              setDelPath={setDelPath}
+              updateDrawingPoints={updateDrawingPoints}
+            />
           </div>
         )}
 
@@ -94,11 +122,19 @@ function App() {
               Draw Path
             </button>
           </div>
+
+        <div className="map-btn">
+          <button onClick={handlePathDelete} disabled={zoomControlEnabled || marker.position.lat === null}>
+            Delete Path
+          </button>
         </div>
-      
+
+
+        </div>
       </div>
   );
 }
 
 export default App;
+
 
