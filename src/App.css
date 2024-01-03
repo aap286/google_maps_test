@@ -2,7 +2,7 @@
 .map-outter-layer {
   width: 700px;
   height: 450px;
-  background-color: aquamarine;
+  /* background-color: aquamarine; */
   border: 1px solid black;
   display: flex;
   flex-direction: row;
@@ -14,14 +14,14 @@
 .map-layout {
   width: 600px;
   height: 100%;
-  background-color: rgb(204, 171, 147);
+  /* background-color: rgb(204, 171, 147); */
 }
 
 /* ? layout of the buttons */
 .map-buttons {
   width: 100px;
   height: 100%;
-  background-color:rgb(189, 185, 247);
+  /* background-color:rgb(189, 185, 247); */
   display: flex;
   flex-direction: column;
 }
@@ -30,7 +30,7 @@
 .map-btn {
   width:50px;
   height: 50px;
-  background-color: antiquewhite;
+  /* background-color: antiquewhite; */
   margin: 15px auto;
 }
 

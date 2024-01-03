@@ -1,11 +1,15 @@
 import { useOnDraw } from "./canvasHooks";
 
+const lineColor = '#00FFFF';
+
 const Canvas = ({width, height, delPath, setDelPath, updateDrawingPoints}) => {
 
     const setCanvasRef = useOnDraw(onDraw, delPath, setDelPath, deletePath, borderPoints, updateDrawingPoints);
 
     function onDraw(ctx, point, prevPoint){
-        drawLine(prevPoint, point, ctx, '#00FF00', 5);
+        
+        drawLine(prevPoint, point, ctx, lineColor, 3);
+    
     }
 
     function drawLine(
@@ -38,6 +42,7 @@ const Canvas = ({width, height, delPath, setDelPath, updateDrawingPoints}) => {
     function borderPoints(point){
         
         const radius = width / 2;
+        // console.log('radius: ', radius);
 
         // center coordinates of circle
         const h = radius;

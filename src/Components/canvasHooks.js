@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 export function useOnDraw(onDraw, delPath, setDelPath, deletePath, borderPoints, updateDrawingPoints) {
 
@@ -11,37 +11,46 @@ export function useOnDraw(onDraw, delPath, setDelPath, deletePath, borderPoints,
     const mouseUpListenerRef= useRef(null);
     const previousPointRef = useRef(null);
 
+    useEffect(() => {
+        return () => {
+            if(mouseMoveListenerRef.current){
+                window.removeEventListener("mousemove", mouseMoveListenerRef.current);
+            }
+            if(mouseUpListenerRef.current){
+                window.removeEventListener("mouseup", mouseUpListenerRef.current);
+            }
+        }
+    }, []);
+
     function setCanvasRef(ref) {
 
         if(!ref) return;
+        // canvasRef.current.removeEventListener("mousedown", mouseDownListenerRef.current);
         canvasRef.current = ref;
         initMouseMoveListener();
         initMouseDownListener();
         initMouseUpListener(); 
         initDeletePath();
+
+        
     }
 
     function initMouseMoveListener() {
-
+        
         const mouseMouseListener = (e) =>{
             if(isDrawingRef.current){
                 const point = computePointInCanvas(e.clientX, e.clientY);
                 const ctx = canvasRef.current.getContext('2d');
-        
+                
+                console.log('this is point', point);
                 // hanling points outside of box
                 if(borderPoints) borderPoints(point)
+                updateDrawingPoints(point);
 
                 if(onDraw) onDraw(ctx, point, previousPointRef.current);
-                // drawingPoints.push(point);
-                previousPointRef.current = point;
-
-                // updates drawing points asynchronously
-                setTimeout(() => {
-                    updateDrawingPoints(point);
-                  }, 0);
                 
-
-                // console.log(drawingPoints);
+                previousPointRef.current = point;
+                
             }
         }
         mouseMoveListenerRef.current = mouseMouseListener;

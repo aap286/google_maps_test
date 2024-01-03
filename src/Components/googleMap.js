@@ -5,44 +5,55 @@ import {useState, useEffect} from "react";
 
 const defaultLocation = { position: { lat: 48.8584, lng: 2.2945 } };
 const defaultZoom = 13;
+const maximumZoom = 14;
 const minimumZoom = 16;
 const radius = Math.sqrt(300000 / Math.PI);
 
+const GoogleMapComponent = ({ zoomControlEnabled, marker, setMarker, removeMarker, drawPath, setDiameter, submittedPath, drawingPoints, convertToCoordinates }) => {
 
-const GoogleMapComponent = ({ zoomControlEnabled, marker, setMarker, removeMarker, drawPath, setDiameter }) => {
 
 
     const [center, setCenter] = useState(defaultLocation);
     const [zoom, setZoom] = useState(defaultZoom);  
-    const { isLoaded, onLoad, map } = useOnLoad(marker, zoom, setZoom);
+    const { isLoaded, onLoad, map,googleMapConPars, convertPixelToLatLng } = useOnLoad(zoom, setZoom);
+
+
     
     // * constriant zoom level too a minimum
-    function constriantZoom() {
-        if (zoom > minimumZoom) {
+    function constriantZoom(zoom) {
+
+        if (zoom > minimumZoom ) {
             setZoom(minimumZoom);
             return minimumZoom;
+        } else if(zoom < maximumZoom) {
+            setZoom(maximumZoom);
+            return maximumZoom;
         }
-
         return zoom;
+        
     }
 
+    // * adding marker to map 
+    const handleAddMarker = (e) => {
+        if (e.latLng && zoomControlEnabled) {
+            const newMarker = { position: { lat: e.latLng.lat(), lng: e.latLng.lng() } };
+            setCenter(newMarker);
+            setMarker(newMarker);
+        };
+    }
+
+    // * call when removing markers
     useEffect(() => {
-        setMarker({ position: { lat: null, lng: null } })
+        if (removeMarker) { setMarker({ position: { lat: null, lng: null } }) }
     }, [removeMarker]);
 
 
 
-    // lock the map for drawing
+    // * lockLatLng;he map for drawing
     useEffect(() => {
         if (drawPath) {
 
-            if (marker.position.lat !== null && marker.position.lng !== null) {
-                const pixelCoordinates = map.getProjection().fromLatLngToPoint(marker.position);
-                // setPos(pixelCoordinates);
-                console.log(pixelCoordinates);
-            }
-
-            const activeZoom = constriantZoom();
+            const activeZoom = constriantZoom(map.getZoom());
             const newCenter = { position: { lat: center.position.lat, lng: center.position.lng } };
             const diameterCal = metersToPixel(newCenter.position.lat, activeZoom);
             
@@ -52,18 +63,24 @@ const GoogleMapComponent = ({ zoomControlEnabled, marker, setMarker, removeMarke
     }, [drawPath]);
 
 
-    // adding coordinate 
-    const handleAddMarker = (e) => {
-        if (e.latLng && zoomControlEnabled) {
-            const newMarker = { position: { lat: e.latLng.lat(), lng: e.latLng.lng() } };
-            setCenter(newMarker);
-            setMarker(newMarker);
-            
-            
-      };
-    }
+    // * when submit button is clicked calculates the google coordinates
+    useEffect(() => {
+        
+        if (submittedPath && drawingPoints.length !== 0 && googleMapConPars !== null) {
+            const newPoints = []
+            for (let i = 0; i < drawingPoints.length; i++) {
 
-    
+                const {lat, lng} = (convertPixelToLatLng(drawingPoints[i].x, drawingPoints[i].y));
+                
+                newPoints.push([lat, lng]); 
+            }
+            
+            if(newPoints.length > 0) {
+                convertToCoordinates(newPoints);};
+
+            
+        }
+    }, [submittedPath]);
     
     if (!isLoaded) {
         return <div>Loading...</div>;
@@ -109,7 +126,6 @@ const GoogleMapComponent = ({ zoomControlEnabled, marker, setMarker, removeMarke
 
 //  style for the circle
 const circleOptions = {
-    // fillColor: 'blue',
     fillOpacity: 0.1,
     strokeColor: 'blue',
     strokeOpacity: 1,
