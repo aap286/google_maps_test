@@ -31,18 +31,15 @@ function App() {
   // ! reference to the map-layout div tag
   const map_layout = useRef(null);
 
+  // ? Access the width and height properties of the div element
   useEffect(() => {
     if (map_layout.current) {
       // Access the width and height properties of the div element
       const width = map_layout.current.offsetWidth;
       const height = map_layout.current.offsetHeight;
 
-      console.log('Frame Width:', width);
-      console.log('frame Height:', height);
-
       googleMapwidth = width;
       googleMapheight = height;
-
     }
   }, []);
 
@@ -95,40 +92,21 @@ function App() {
   // retrieves the latest value of diameter
   useEffect(() => {
     
-    if(diameter != null && drawPath){
+    if(diameter != null){
 
-      // habndle case when diameter is bigger than the current map
-      var checkDiameterWidth = diameter.width;
-      var checkDiameterHeight = diameter.height;
-      
-      // if diameter bigger than the current map
-      if (checkDiameterHeight > googleMapheight) {
-        
-        checkDiameterHeight = googleMapheight;
-        setDiameter({ width: checkDiameterWidth, height: checkDiameterHeight });
-      } 
-
-      if (checkDiameterWidth > googleMapwidth) {
-        checkDiameterWidth = googleMapwidth;
-        setDiameter({ width: checkDiameterWidth, height: checkDiameterHeight });
-      };
-      
+      const paddingWidth = googleMapwidth * 0.5 - diameter / 2;
+      const paddingHeight = googleMapheight * 0.5 - diameter / 2;
 
 
-      // ? padding outside div tag that holds the map
-      const paddingWidth = googleMapwidth * 0.5 - checkDiameterWidth / 2;
-      const paddinHeight = googleMapheight * 0.5 - checkDiameterHeight  / 2;
-
-    
       // * canavas out div tag styles
       setCanavsOuterLayoutStyle({
         position: 'absolute',
         // top: `calc(50% - ${diameter/2}px)`,
         // left: `calc(50% - ${diameter / 2}px)`,
-        top: `${paddinHeight}px`,
+        top: `${paddingHeight}px`,
         left: `${paddingWidth}px`,
-        width: `${checkDiameterWidth}px`,
-        height: `${checkDiameterHeight}px`,
+        width: `${diameter}px`,
+        height: `${diameter}px`,
         border: "1px solid red",
         zIndex: 999,
       });
@@ -136,9 +114,8 @@ function App() {
       // * offesting points by this
       setGoogleMapffset({
         widthOffset: paddingWidth,
-        heightOffset: paddinHeight
+        heightOffset: paddingHeight
       })
-
     }
   }, [diameter, drawPath]);
 
@@ -172,11 +149,11 @@ function App() {
       <div className="map-outter-layer">
 
         <div className="map-layout relative-position" ref={map_layout}>
-            {diameter   !== null && drawPath && marker.position.lat != null && marker.position.lng != null && (
+            {diameter !== null && drawPath && marker.position.lat != null && marker.position.lng != null && (
               <div className="absolute-position" style={canavsOuterLayoutStyle}>
                 <Canvas
-                  width={diameter.width.toString()}
-                  height={diameter.height.toString()}
+                  width={diameter.toString()}
+                  height={diameter.toString()}
                   delPath={delPath}
                   setDelPath={setDelPath}
                   updateDrawingPoints={updateDrawingPoints}
@@ -241,7 +218,7 @@ function App() {
         </div>
       </div>
 
-      <LocationSearchInput map={map} />
+      <LocationSearchInput map={map} clearMarker={clearMarker} />
     </>
   );
 }

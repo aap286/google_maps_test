@@ -30,13 +30,13 @@ const GoogleMapComponent = ({ zoomControlEnabled, marker, setMarker, removeMarke
     // * constriant zoom level too a minimum
     function constriantZoom(zoom) {
 
-        // if (zoom > minimumZoom ) {
-        //     setZoom(minimumZoom);
-        //     return minimumZoom;
-        // } else if(zoom < maximumZoom) {
-        //     setZoom(maximumZoom);
-        //     return maximumZoom;
-        // }
+        if (zoom > minimumZoom ) {
+            setZoom(minimumZoom);
+            return minimumZoom;
+        } else if(zoom < maximumZoom) {
+            setZoom(maximumZoom);
+            return maximumZoom;
+        }
         return zoom;
         
     }
@@ -65,10 +65,8 @@ const GoogleMapComponent = ({ zoomControlEnabled, marker, setMarker, removeMarke
             const newCenter = { position: { lat: center.position.lat, lng: center.position.lng } };
             const diameterCal = metersToPixel(newCenter.position.lat, activeZoom);
             
-            setDiameter({ width: diameterCal , height: diameterCal });
+            setDiameter(diameterCal);;
             setCenter(newCenter);
-
-            console.log('this is diamter calcuated', diameterCal);
         } 
     }, [drawPath]);
 

@@ -43,7 +43,7 @@ export function useOnDraw(onDraw, delPath, setDelPath, deletePath, borderPoints,
                 const ctx = canvasRef.current.getContext('2d');
                 
                 // hanling points outside of box
-                // if(borderPoints) borderPoints(point) 
+                if(borderPoints) borderPoints(point) 
                 updateDrawingPoints(point);
 
                 if(onDraw) onDraw(ctx, point, previousPointRef.current);

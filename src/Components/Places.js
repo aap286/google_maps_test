@@ -3,7 +3,7 @@ import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-au
 import { useOnLoad } from "./googleMapsHooks";
 
 
-const LocationSearchInput = ({ map }) => {
+const LocationSearchInput = ({ map, clearMarker }) => {
     const [address, setAddress] = useState('');
     const [selectedLocation, setSelectedLocation] = useState(null);
 
@@ -29,6 +29,7 @@ const LocationSearchInput = ({ map }) => {
         if (selectedLocation ) {
             
             panMap(map, selectedLocation)
+            clearMarker();
             
         } else {
             console.log('No location selected');
