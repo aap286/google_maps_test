@@ -8,7 +8,7 @@ const Canvas = ({width, height, delPath, setDelPath, updateDrawingPoints}) => {
 
     function onDraw(ctx, point, prevPoint){
         
-        drawLine(prevPoint, point, ctx, lineColor, 3);
+        drawLine(prevPoint, point, ctx, lineColor, 5);
     
     }
 

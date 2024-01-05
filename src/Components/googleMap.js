@@ -1,6 +1,6 @@
 import { GoogleMap, MarkerF, CircleF } from "@react-google-maps/api";
 import { useOnLoad } from "./googleMapsHooks";
-import {useState, useEffect} from "react";
+import {useState, useEffect, useRef} from "react";
 
 
 const defaultLocation = { position: { lat: 48.8584, lng: 2.2945 } };
@@ -9,26 +9,34 @@ const maximumZoom = 14;
 const minimumZoom = 16;
 const radius = Math.sqrt(300000 / Math.PI);
 
-const GoogleMapComponent = ({ zoomControlEnabled, marker, setMarker, removeMarker, drawPath, setDiameter, submittedPath, drawingPoints, convertToCoordinates }) => {
+const GoogleMapComponent = ({ zoomControlEnabled, marker, setMarker, removeMarker, drawPath, setDiameter, submittedPath, drawingPoints, convertToCoordinates, setMap }) => {
 
 
 
     const [center, setCenter] = useState(defaultLocation);
     const [zoom, setZoom] = useState(defaultZoom);  
-    const { isLoaded, onLoad, map,googleMapConPars, convertPixelToLatLng } = useOnLoad(zoom, setZoom);
+    const { isLoaded, onLoad, map, googleMapConPars, convertPixelToLatLng, pixelToMapRatio, panMap = null, removeMarkerSearch } = useOnLoad();
 
+
+    // Call setMap when the map is loaded
+    useEffect(() => {
+        if (isLoaded) {
+            setMap(map);
+            setZoom(defaultZoom);
+        }
+    }, [isLoaded, map, setMap]);
 
     
     // * constriant zoom level too a minimum
     function constriantZoom(zoom) {
 
-        if (zoom > minimumZoom ) {
-            setZoom(minimumZoom);
-            return minimumZoom;
-        } else if(zoom < maximumZoom) {
-            setZoom(maximumZoom);
-            return maximumZoom;
-        }
+        // if (zoom > minimumZoom ) {
+        //     setZoom(minimumZoom);
+        //     return minimumZoom;
+        // } else if(zoom < maximumZoom) {
+        //     setZoom(maximumZoom);
+        //     return maximumZoom;
+        // }
         return zoom;
         
     }
@@ -57,8 +65,10 @@ const GoogleMapComponent = ({ zoomControlEnabled, marker, setMarker, removeMarke
             const newCenter = { position: { lat: center.position.lat, lng: center.position.lng } };
             const diameterCal = metersToPixel(newCenter.position.lat, activeZoom);
             
-            setDiameter(diameterCal);
+            setDiameter({ width: diameterCal , height: diameterCal });
             setCenter(newCenter);
+
+            console.log('this is diamter calcuated', diameterCal);
         } 
     }, [drawPath]);
 
@@ -81,46 +91,67 @@ const GoogleMapComponent = ({ zoomControlEnabled, marker, setMarker, removeMarke
             
         }
     }, [submittedPath]);
-    
+
+    // * when zoom level chnages find the pixel to map changes
+    useEffect(() => {
+        if(isLoaded && zoom ) {
+            // console.log('MAP', map);
+            pixelToMapRatio()
+        }
+
+    }, [isLoaded, zoom])
+
+    // * removes maeker when user search place
+    useEffect(() => {
+        if (removeMarkerSearch) {
+            setMarker({ position: { lat: null, lng: null } })
+        }
+    }, [removeMarkerSearch])
+
+
     if (!isLoaded) {
-        return <div>Loading...</div>;
+        return (
+            <></>
+        );
     }
 
-
+    
+ 
     return (
-        
-        <GoogleMap
-        center={center.position}
-        zoom={zoom}
-        mapContainerStyle={{ width: '100%', height: '100%' }}
-        options={{
-            streetViewControl: false,
-            fullscreenControl: false,
-            scrollwheel: !drawPath,
-            zoomControl: !drawPath,
-            gestureHandling: drawPath ? 'none' : 'cooperative',
-            clickableIcons: drawPath ? false : true,
-        }}
-        onLoad={onLoad}
-        onClick={handleAddMarker}
-        >
-        
-            {marker !== null && marker.position.lat !== null && marker.position.lng !== null && (
-                <>
-                
-                    { !drawPath &&(
-                        <MarkerF key="marker" position={marker.position} />
-                    )}
-                    
+            <GoogleMap
+                center={center.position}
+                zoom={zoom}
+                mapContainerStyle={{ width: '100%', height: '100%' }}
+                options={{
+                    streetViewControl: false,
+                    fullscreenControl: false,
+                    scrollwheel: !drawPath,
+                    zoomControl: !drawPath,
+                    gestureHandling: drawPath ? 'none' : 'cooperative',
+                    clickableIcons: drawPath ? false : true,
+                }}
+                onLoad={onLoad}
+                onClick={handleAddMarker}
+            >
+
+                {marker !== null && marker.position.lat !== null && marker.position.lng !== null && (
+                    <>
+
+                        {!drawPath && (
+                            <MarkerF key="marker" position={marker.position} />
+                        )}
+
                         <CircleF
                             key="circle"
                             center={marker.position}
                             radius={radius}
                             options={circleOptions}
                         />
-                </>
-        )}
-        </GoogleMap>
+                    </>
+                )}
+
+            </GoogleMap>
+        
     );
 };
 
@@ -144,4 +175,5 @@ function metersPerPixel(lat, zoom) {
 
 
 function metersToPixel(lat, zoom) { return radius / metersPerPixel(lat, zoom) * 2; }
+
 

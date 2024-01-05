@@ -1,11 +1,13 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import './App.css';
 import GoogleMapComponent from "./Components/googleMap";
 import Canvas from './Components/Canvas';
+import LocationSearchInput from "./Components/Places";
+
 
 // pre css styling
-const googleMapwidth = 600;
-const googleMapheight = 450;
+var googleMapwidth = null;
+var googleMapheight = null;
 
 function App() {
 
@@ -19,11 +21,30 @@ function App() {
   const [canavsOuterLayoutStyle, setCanavsOuterLayoutStyle] = useState(null);
   const [googleMapffset, setGoogleMapffset] = useState({widthOffset:null, heightOffset:null});
 
-  // boolean for deleting path by button
-  // const [delPath, setDelPath] = useState(null);
   const [delPath, setDelPath] = useState(false);
   const [drawingPoints, setDrawingPoints] = useState([]);
   const [submittedPath, setSubmittedPath] = useState(false);
+
+  // ! map reference when created
+  const [map, setMap] = useState(null);
+
+  // ! reference to the map-layout div tag
+  const map_layout = useRef(null);
+
+  useEffect(() => {
+    if (map_layout.current) {
+      // Access the width and height properties of the div element
+      const width = map_layout.current.offsetWidth;
+      const height = map_layout.current.offsetHeight;
+
+      console.log('Frame Width:', width);
+      console.log('frame Height:', height);
+
+      googleMapwidth = width;
+      googleMapheight = height;
+
+    }
+  }, []);
 
 
   
@@ -61,6 +82,8 @@ function App() {
   // * submit path button
   function submittedPathBtn() {
     setSubmittedPath(!submittedPath);
+    setDrawPath(!drawPath);
+    setMarker({ position: { lat: null, lng: null } }); // ! REMOVES MARKER FROM SCREEN
 
   }
 
@@ -72,31 +95,52 @@ function App() {
   // retrieves the latest value of diameter
   useEffect(() => {
     
-    if(diameter != null){
+    if(diameter != null && drawPath){
 
-      const width = googleMapwidth * 0.5 - diameter / 2;
-      const height = googleMapheight * 0.5 - diameter / 2;
+      // habndle case when diameter is bigger than the current map
+      var checkDiameterWidth = diameter.width;
+      var checkDiameterHeight = diameter.height;
+      
+      // if diameter bigger than the current map
+      if (checkDiameterHeight > googleMapheight) {
+        
+        checkDiameterHeight = googleMapheight;
+        setDiameter({ width: checkDiameterWidth, height: checkDiameterHeight });
+      } 
 
+      if (checkDiameterWidth > googleMapwidth) {
+        checkDiameterWidth = googleMapwidth;
+        setDiameter({ width: checkDiameterWidth, height: checkDiameterHeight });
+      };
+      
+
+
+      // ? padding outside div tag that holds the map
+      const paddingWidth = googleMapwidth * 0.5 - checkDiameterWidth / 2;
+      const paddinHeight = googleMapheight * 0.5 - checkDiameterHeight  / 2;
+
+    
       // * canavas out div tag styles
       setCanavsOuterLayoutStyle({
         position: 'absolute',
         // top: `calc(50% - ${diameter/2}px)`,
         // left: `calc(50% - ${diameter / 2}px)`,
-        top: `${height}px`,
-        left: `${width}px`,
-        width: `${diameter}px`,
-        height: `${diameter}px`,
+        top: `${paddinHeight}px`,
+        left: `${paddingWidth}px`,
+        width: `${checkDiameterWidth}px`,
+        height: `${checkDiameterHeight}px`,
         border: "1px solid red",
         zIndex: 999,
       });
 
       // * offesting points by this
       setGoogleMapffset({
-        widthOffset: width,
-        heightOffset: height
+        widthOffset: paddingWidth,
+        heightOffset: paddinHeight
       })
+
     }
-  }, [diameter]);
+  }, [diameter, drawPath]);
 
 
 
@@ -122,75 +166,83 @@ function App() {
     }
   }, [submittedPath, convertToCoordinates])
 
+ 
   return (
-    <div className="map-outter-layer">
-      <div className="map-layout relative-position">
-        {diameter !== null && drawPath && marker.position.lat != null && marker.position.lng != null && (
-          <div className="absolute-position"  style={canavsOuterLayoutStyle}>
-            <Canvas
-              width={diameter.toString()}
-              height={diameter.toString()}
-              delPath={delPath}
-              setDelPath={setDelPath}
-              updateDrawingPoints={updateDrawingPoints}
-            />
-          </div>
-        )}
+    <>
+      <div className="map-outter-layer">
 
-        <GoogleMapComponent
-          zoomControlEnabled={zoomControlEnabled}
-          marker={marker}
-          setMarker={setMarker}
-          removeMarker={removeMarker}
-          drawPath={drawPath}
-          setDiameter={setDiameter}
-          submittedPath={submittedPath}
-          drawingPoints={drawingPoints}
-          convertToCoordinates={convertToCoordinates}
-          diameter={diameter}
-        />
+        <div className="map-layout relative-position" ref={map_layout}>
+            {diameter   !== null && drawPath && marker.position.lat != null && marker.position.lng != null && (
+              <div className="absolute-position" style={canavsOuterLayoutStyle}>
+                <Canvas
+                  width={diameter.width.toString()}
+                  height={diameter.height.toString()}
+                  delPath={delPath}
+                  setDelPath={setDelPath}
+                  updateDrawingPoints={updateDrawingPoints}
+                />
+              </div>
+            )}
+
+          <GoogleMapComponent
+            zoomControlEnabled={zoomControlEnabled}
+            marker={marker}
+            setMarker={setMarker}
+            removeMarker={removeMarker}
+            drawPath={drawPath}
+            setDiameter={setDiameter}
+            submittedPath={submittedPath}
+            drawingPoints={drawingPoints}
+            convertToCoordinates={convertToCoordinates}
+            diameter={diameter}
+            setMap={setMap} 
+          />
+
         </div>
 
         <div className="map-buttons">
           <div className="map-btn">
-          <button onClick={addMarker} disabled={drawPath || submittedPath}>
+            <button onClick={addMarker} disabled={drawPath || submittedPath}>
               Add Pin
 
             </button>
           </div>
 
           <div className="map-btn">
-          <button onClick={clearMarker} disabled={marker.position.lat === null || drawPath || submittedPath}  >
+            <button onClick={clearMarker} disabled={marker.position.lat === null || drawPath || submittedPath}  >
               Clear Marker
             </button>
           </div>
 
           <div className="map-btn">
-          <button onClick={lockPath} disabled={ zoomControlEnabled || marker.position.lat === null || submittedPath}>
+            <button onClick={lockPath} disabled={zoomControlEnabled || marker.position.lat === null || submittedPath}>
               Draw Path
             </button>
           </div>
 
-        <div className="map-btn">
-          <button onClick={handlePathDelete} disabled={drawingPoints.length === 0 || submittedPath}>
-            Delete Path
-          </button>
-        </div>
+          <div className="map-btn">
+            <button onClick={handlePathDelete} disabled={drawingPoints.length === 0 || submittedPath}>
+              Delete Path
+            </button>
+          </div>
 
-        <div className="map-btn">
-          <button onClick={submittedPathBtn} disabled={drawingPoints.length === 0 || submittedPath}>
-            Submit Path
-          </button>
-        </div>
+          <div className="map-btn">
+            <button onClick={submittedPathBtn} disabled={drawingPoints.length === 0 || submittedPath}>
+              Submit Path
+            </button>
+          </div>
 
-        <div className="map-btn">
-          <button onClick={handleRefresh} >
-            Refresh Page
-          </button>
-        </div>
+          <div className="map-btn">
+            <button onClick={handleRefresh} >
+              Refresh Page
+            </button>
+          </div>
 
         </div>
       </div>
+
+      <LocationSearchInput map={map} />
+    </>
   );
 }
 

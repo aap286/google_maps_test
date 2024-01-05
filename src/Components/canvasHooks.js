@@ -42,9 +42,8 @@ export function useOnDraw(onDraw, delPath, setDelPath, deletePath, borderPoints,
                 const point = computePointInCanvas(e.clientX, e.clientY);
                 const ctx = canvasRef.current.getContext('2d');
                 
-                console.log('this is point', point);
                 // hanling points outside of box
-                if(borderPoints) borderPoints(point)
+                // if(borderPoints) borderPoints(point) 
                 updateDrawingPoints(point);
 
                 if(onDraw) onDraw(ctx, point, previousPointRef.current);
@@ -58,6 +57,7 @@ export function useOnDraw(onDraw, delPath, setDelPath, deletePath, borderPoints,
     }
 
     function initMouseDownListener() {
+        
         if(!canvasRef.current) return;
         const listener = () =>{
             isDrawingRef.current = true;

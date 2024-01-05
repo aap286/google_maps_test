@@ -1,32 +1,46 @@
-import { useState, useEffect } from "react";
-import {useJsApiLoader} from "@react-google-maps/api"
+import { useState } from "react";
+import {useJsApiLoader } from "@react-google-maps/api"
 
-export function useOnLoad( zoom, setZoom) {
+export function useOnLoad() {
 
     // ? reference to the map
     const [map, setMap] = useState(null);
     const [googleMapConPars, setgoogleMapConPars] = useState(null);
+    const [libraries] = useState(['places']);
+
+    // remove marker if user searches place
+    const [removeMarkerSearch, setRemoveMarkerSearch] = useState(false);
 
 
     const {isLoaded} = useJsApiLoader({
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
+    libraries
   })
 
   
   // refrence to map
   const onLoad = (mapRef) => {
     setMap(mapRef);
-
-    // when zoom level changes
-    mapRef.addListener("zoom_changed", () => {
-      setZoom(mapRef.getZoom());
-    });
-
+    
   };
 
-  useEffect(() => {
 
-    if(isLoaded &&  map){
+
+  // recenter map after search
+  const panMap = (map, point, searched) => {
+    
+    if(map){      
+      // data type is {lat: xx, lng: xx}
+      map.panTo(point);
+      setRemoveMarkerSearch(!removeMarkerSearch);
+    }
+      
+    
+  }
+
+  // * pixel to map coordinates ratio
+  function pixelToMapRatio(){
+    if (isLoaded && map) {
       var topRight = map.getProjection().fromLatLngToPoint(map.getBounds().getNorthEast());
       var bottomLeft = map.getProjection().fromLatLngToPoint(map.getBounds().getSouthWest());
       var scale = Math.pow(2, map.getZoom());
@@ -37,7 +51,7 @@ export function useOnLoad( zoom, setZoom) {
         scale: scale
       })
     }
-  }, [zoom])
+  };
 
 
   //  * converts pixels x,y to map coordinates
@@ -51,8 +65,10 @@ export function useOnLoad( zoom, setZoom) {
       return { lat: LatLng.lat(), lng: LatLng.lng() };
     }
   };
+  
 
- 
-  // return isLoaded ? onLoad : null;
-  return { isLoaded, onLoad, map, googleMapConPars, convertPixelToLatLng };
+    
+  return  { isLoaded, onLoad, map, googleMapConPars, convertPixelToLatLng, pixelToMapRatio, panMap, removeMarkerSearch};
 };
+
+
