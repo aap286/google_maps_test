@@ -1,6 +1,7 @@
 import { GoogleMap, MarkerF, CircleF } from "@react-google-maps/api";
 import { useOnLoad } from "./googleMapsHooks";
 import {useState, useEffect, useRef} from "react";
+import _debounce from 'lodash/debounce';
 
 
 const defaultLocation = { position: { lat: 48.8584, lng: 2.2945 } };
@@ -47,6 +48,8 @@ const GoogleMapComponent = ({ zoomControlEnabled, marker, setMarker, removeMarke
             const newMarker = { position: { lat: e.latLng.lat(), lng: e.latLng.lng() } };
             setCenter(newMarker);
             setMarker(newMarker);
+
+            console.log(newMarker);
         };
     }
 
@@ -107,6 +110,87 @@ const GoogleMapComponent = ({ zoomControlEnabled, marker, setMarker, removeMarke
     }, [removeMarkerSearch])
 
 
+    // ! Handle map drag
+
+    const googleMapRef = useRef(null);
+
+    
+
+    const [googleMapDimensions, setGoogleMapDimensions] = useState({
+        width: null,
+        height: null,
+    });
+
+    useEffect(() => {
+        if (googleMapRef.current && googleMapRef.current.mapRef) {
+            const { width, height } = googleMapRef.current.mapRef.getBoundingClientRect();
+            console.log('Google map width & height:', width, height);
+            setGoogleMapDimensions({
+                width,
+                height,
+            });
+        }
+    }, [googleMapRef.current]);
+
+
+    // const handleMouseMove = (e) => {
+        
+    //     const pixelX = e.pixel.x
+    //     const pixelY = e.pixel.y
+
+    //     // Define a threshold (in pixels) to trigger map movement
+    //     const threshold = 10;
+        
+        
+
+    //     if(pixelX + 10 > googleMapDimensions.width) {
+        //     setCenter((prevOptions) => ({
+        //       ...prevOptions,
+        //         position: {
+        //             lat: prevOptions.position.lat,
+        //             lng: prevOptions.position.lng + threshold,
+        //         },
+        //     }));
+        // } else if (pixelX - 10 < 0){
+    //         setCenter((prevOptions) => ({
+    //          ...prevOptions,
+    //             position: {
+    //                 lat: prevOptions.position.lat,
+    //                 lng: prevOptions.position.lng - threshold,
+    //             },
+    //         }));
+    //     }
+    // };
+
+    const handleMouseMove = _debounce((e) => {
+        const pixelX = e.pixel.x;
+        const pixelY = e.pixel.y;
+
+        // threshold to mark when to trigger 
+        const threshold = 10;
+        const dispalcement = 0;
+
+        // console.log(pixelX, pixelY, threshold);
+        // if (pixelX + threshold > googleMapDimensions.width) {
+        // setCenter((prevOptions) => ({
+        //     ...prevOptions,
+        //     position: {
+        //     lat: prevOptions.position.lat,
+        //     lng: prevOptions.position.lng + threshold,
+        //     },
+        // }));
+        // } else if (pixelX - threshold < 0) {
+        // setCenter((prevOptions) => ({
+        //     ...prevOptions,
+        //     position: {
+        //     lat: prevOptions.position.lat,
+        //     lng: prevOptions.position.lng - threshold,
+        //     },
+        // }));
+        // }
+  }, 200);
+
+
     if (!isLoaded) {
         return (
             <></>
@@ -130,6 +214,8 @@ const GoogleMapComponent = ({ zoomControlEnabled, marker, setMarker, removeMarke
                 }}
                 onLoad={onLoad}
                 onClick={handleAddMarker}
+            onMouseMove={handleMouseMove}
+                ref = {googleMapRef}
             >
 
                 {marker !== null && marker.position.lat !== null && marker.position.lng !== null && (
